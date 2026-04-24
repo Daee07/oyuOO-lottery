@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>五一假期去哪儿嗨？</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;500;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: #0a0a0f;
+      background-image:
+        radial-gradient(ellipse at 20% 80%, rgba(0, 200, 255, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(255, 0, 128, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(0, 255, 200, 0.04) 0%, transparent 70%);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Noto Sans SC', sans-serif;
+      color: #fff;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.5rem, 5vw, 2.8rem);
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #00f0ff 0%, #ff00ff 50%, #f0ff00 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 0.1em;
+      position: relative;
+      z-index: 10;
+    }
+    .subtitle {
+      font-size: clamp(0.8rem, 2.5vw, 1.1rem);
+      color: rgba(0, 240, 255, 0.7);
+      text-align: center;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.3em;
+      font-weight: 300;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 10;
+    }
+
+    .scene {
+      width: min(70vw, 450px);
+      height: min(70vw, 450px);
+      perspective: 1200px;
+      position: relative;
+      z-index: 5;
+    }
+
+    .sphere {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: rotate-slow 20s linear infinite;
+    }
+
+    .sphere.spinning {
+      animation: spin-fast 3s ease-out forwards;
+    }
+
+    @keyframes rotate-slow {
+      from { transform: rotateX(-20deg) rotateY(0deg); }
+      to { transform: rotateX(-20deg) rotateY(360deg); }
+    }
+
+    @keyframes spin-fast {
+      0% { transform: rotateX(-20deg) rotateY(0deg); }
+      100% { transform: rotateX(-20deg) rotateY(1440deg); }
+    }
+
+    .card {
+      position: absolute;
+      width: 60px;
+      height: 38px;
+      left: 50%;
+      top: 50%;
+      margin-left: -30px;
+      margin-top: -19px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      font-weight: 500;
+      color: #fff;
+      cursor: default;
+      transform-style: preserve-3d;
+      will-change: transform;
+      white-space: nowrap;
+    }
+
+    .card-text {
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      padding: 0 4px;
+    }
+
+    .card.c0 { background: linear-gradient(135deg, #ff006e, #ff00ff); }
+    .card.c1 { background: linear-gradient(135deg, #00f0ff, #00ff88); }
+    .card.c2 { background: linear-gradient(135deg, #8b00ff, #ff00ff); }
+    .card.c3 { background: linear-gradient(135deg, #ff8c00, #ffea00); }
+    .card.c4 { background: linear-gradient(135deg, #00ff88, #00f0ff); }
+    .card.c5 { background: linear-gradient(135deg, #ff006e, #8b00ff); }
+    .card.c6 { background: linear-gradient(135deg, #ff4500, #ffea00); }
+    .card.c7 { background: linear-gradient(135deg, #00f0ff, #8b00ff); }
+    .card.c8 { background: linear-gradient(135deg, #ff00ff, #ff4500); }
+    .card.c9 { background: linear-gradient(135deg, #00ff88, #ff8c00); }
+
+    /* 选中卡片浮层 - 独立于球体渲染 */
+    .selected-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .selected-overlay.show {
+      opacity: 1;
+    }
+
+    .selected-card {
+      width: 260px;
+      height: 165px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #fff;
+      border: 3px solid #fff;
+      animation: selected-pulse 1s ease-in-out infinite alternate;
+      transform: scale(0);
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .selected-overlay.show .selected-card {
+      transform: scale(1);
+    }
+
+    @keyframes selected-pulse {
+      from {
+        box-shadow:
+          0 0 60px rgba(0, 240, 255, 1),
+          0 0 120px rgba(0, 240, 255, 0.5),
+          0 0 180px rgba(0, 240, 255, 0.3),
+          inset 0 0 40px rgba(0, 240, 255, 0.3);
+      }
+      to {
+        box-shadow:
+          0 0 80px rgba(255, 0, 255, 1),
+          0 0 160px rgba(255, 0, 255, 0.5),
+          0 0 240px rgba(255, 0, 255, 0.3),
+          inset 0 0 60px rgba(255, 0, 255, 0.3);
+      }
+    }
+
+    .selected-card-label {
+      font-size: 0.7rem;
+      font-weight: 400;
+      opacity: 0.8;
+      letter-spacing: 0.2em;
+      margin-bottom: 0.3em;
+    }
+
+    .btn-area {
+      margin-top: 1.5rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    .btn-start {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      padding: 1rem 3rem;
+      border: 2px solid #00f0ff;
+      background: transparent;
+      color: #00f0ff;
+      border-radius: 4px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .btn-start::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #00f0ff, #8b00ff);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: -1;
+    }
+
+    .btn-start:hover {
+      color: #000;
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.6);
+    }
+
+    .btn-start:hover::before { opacity: 1; }
+
+    .btn-start:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      border-color: #666;
+      color: #888;
+    }
+    .btn-start:disabled:hover { box-shadow: none; }
+    .btn-start:disabled:hover::before { opacity: 0; }
+
+    .result {
+      margin-top: 1.5rem;
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1rem, 3vw, 1.4rem);
+      color: #00f0ff;
+      text-align: center;
+      min-height: 2em;
+      letter-spacing: 0.1em;
+      position: relative;
+      z-index: 10;
+    }
+
+    .result-text {
+      animation: reveal 0.5s ease-out;
+    }
+
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: rgba(0, 240, 255, 0.4);
+      letter-spacing: 0.1em;
+    }
+
+    /* 彩带 */
+    .confetti-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 200;
+      overflow: hidden;
+    }
+
+    .confetti {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0;
+    }
+
+    .confetti.active {
+      animation: confetti-fall 3s ease-out forwards;
+    }
+
+    @keyframes confetti-fall {
+      0% { opacity: 1; transform: translateY(-20px) rotate(0deg); }
+      100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+    }
+
+    .confetti-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      opacity: 0;
+    }
+
+    .confetti-ring.active {
+      animation: ring-expand 1.5s ease-out forwards;
+    }
+
+    @keyframes ring-expand {
+      0% { opacity: 0.8; transform: scale(0); }
+      100% { opacity: 0; transform: scale(4); }
+    }
+  </style>
+</head>
+<body>
+
+  <h1 class="title">五一假期去哪儿嗨</h1>
+  <p class="subtitle">随机抽奖 · 精彩随行</p>
+
+  <div class="scene">
+    <div class="sphere" id="sphere"></div>
+  </div>
+
+  <div class="btn-area">
+    <button class="btn-start" id="btnStart" onclick="startLottery()">开始抽奖</button>
+  </div>
+
+  <div class="result" id="result">
+    <span class="hint">点击按钮，开启你的五一之旅</span>
+  </div>
+
+  <div class="confetti-container" id="confettiContainer"></div>
+
+  <!-- 选中卡片浮层 -->
+  <div class="selected-overlay" id="selectedOverlay">
+    <div class="selected-card" id="selectedCard">
+      <div class="selected-card-label">抽中目的地</div>
+      <div id="selectedCardName"></div>
+    </div>
+  </div>
+
+  <script>
+    const provinces = [
+      { name: '北京市', pinyin: 'beijing' },
+      { name: '天津市', pinyin: 'tianjin' },
+      { name: '上海市', pinyin: 'shanghai' },
+      { name: '重庆市', pinyin: 'chongqing' },
+      { name: '河北省', pinyin: 'hebei' },
+      { name: '山西省', pinyin: 'shanxi' },
+      { name: '辽宁省', pinyin: 'liaoning' },
+      { name: '吉林省', pinyin: 'jilin' },
+      { name: '黑龙江省', pinyin: 'heilongjiang' },
+      { name: '江苏省', pinyin: 'jiangsu' },
+      { name: '浙江省', pinyin: 'zhejiang' },
+      { name: '安徽省', pinyin: 'anhui' },
+      { name: '福建省', pinyin: 'fujian' },
+      { name: '江西省', pinyin: 'jiangxi' },
+      { name: '山东省', pinyin: 'shandong' },
+      { name: '河南省', pinyin: 'henan' },
+      { name: '湖北省', pinyin: 'hubei' },
+      { name: '湖南省', pinyin: 'hunan' },
+      { name: '广东省', pinyin: 'guangdong' },
+      { name: '海南省', pinyin: 'hainan' },
+      { name: '四川省', pinyin: 'sichuan' },
+      { name: '贵州省', pinyin: 'guizhou' },
+      { name: '云南省', pinyin: 'yunnan' },
+      { name: '陕西省', pinyin: 'shaanxi' },
+      { name: '甘肃省', pinyin: 'gansu' },
+      { name: '青海省', pinyin: 'qinghai' },
+      { name: '台湾省', pinyin: 'taiwan' },
+      { name: '内蒙古自治区', pinyin: 'neimeng' },
+      { name: '广西壮族自治区', pinyin: 'guangxi' },
+      { name: '西藏自治区', pinyin: 'xizang' },
+      { name: '宁夏回族自治区', pinyin: 'ningxia' },
+      { name: '新疆维吾尔自治区', pinyin: 'xinjiang' },
+      { name: '香港特别行政区', pinyin: 'xianggang' },
+      { name: '澳门特别行政区', pinyin: 'aomen' }
+    ];
+
+    const sphere = document.getElementById('sphere');
+    const btnStart = document.getElementById('btnStart');
+    const resultEl = document.getElementById('result');
+    const confettiContainer = document.getElementById('confettiContainer');
+    const selectedOverlay = document.getElementById('selectedOverlay');
+    const selectedCard = document.getElementById('selectedCard');
+    const selectedCardName = document.getElementById('selectedCardName');
+
+    const radius = 160;
+    const goldenRatio = (1 + Math.sqrt(5)) / 2;
+    const n = provinces.length;
+
+    const cards = [];
+    const cardTransforms = []; // 保存每个卡片的初始 transform
+
+    // 渐变色映射，用于选中卡片
+    const colorMap = [
+      'linear-gradient(135deg, #ff006e, #ff00ff)',
+      'linear-gradient(135deg, #00f0ff, #00ff88)',
+      'linear-gradient(135deg, #8b00ff, #ff00ff)',
+      'linear-gradient(135deg, #ff8c00, #ffea00)',
+      'linear-gradient(135deg, #00ff88, #00f0ff)',
+      'linear-gradient(135deg, #ff006e, #8b00ff)',
+      'linear-gradient(135deg, #ff4500, #ffea00)',
+      'linear-gradient(135deg, #00f0ff, #8b00ff)',
+      'linear-gradient(135deg, #ff00ff, #ff4500)',
+      'linear-gradient(135deg, #00ff88, #ff8c00)',
+    ];
+
+    // 创建球体
+    function createSphere() {
+      for (let i = 0; i < n; i++) {
+        const theta = 2 * Math.PI * i / goldenRatio;
+        const phi = Math.acos(1 - 2 * (i + 0.5) / n);
+
+        const x = radius * Math.sin(phi) * Math.cos(theta);
+        const y = radius * Math.sin(phi) * Math.sin(theta);
+        const z = radius * Math.cos(phi);
+
+        const card = document.createElement('div');
+        card.className = `card c${i % 10}`;
+        card.dataset.index = i;
+
+        const text = document.createElement('div');
+        text.className = 'card-text';
+        text.textContent = provinces[i].name;
+        card.appendChild(text);
+
+        // 计算卡片朝向（使卡片始终朝向球心）
+        const ax = Math.atan2(y, z);
+        const ay = Math.atan2(x * Math.cos(phi), z);
+        const transform = `translate3d(${x}px, ${y}px, ${z}px) rotateX(${ax}rad) rotateY(${ay}rad)`;
+        card.style.transform = transform;
+
+        // 保存初始 transform
+        cardTransforms.push(transform);
+
+        sphere.appendChild(card);
+        cards.push(card);
+      }
+    }
+
+    createSphere();
+
+    function createConfetti() {
+      confettiContainer.innerHTML = '';
+      const colors = ['#ff006e', '#00f0ff', '#8b00ff', '#ff8c00', '#00ff88', '#ffea00', '#ff00ff'];
+
+      // 圆环
+      for (let i = 0; i < 6; i++) {
+        const ring = document.createElement('div');
+        ring.className = 'confetti-ring';
+        ring.style.cssText = `
+          left: 50%; top: 50%;
+          margin-left: -${30 + i * 25}px;
+          margin-top: -${30 + i * 25}px;
+          width: ${60 + i * 50}px; height: ${60 + i * 50}px;
+          border-color: ${colors[i % colors.length]};
+          animation-delay: ${i * 0.12}s;
+        `;
+        confettiContainer.appendChild(ring);
+        setTimeout(() => ring.classList.add('active'), 50);
+      }
+
+      // 飘落
+      for (let i = 0; i < 70; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const size = 5 + Math.random() * 8;
+        c.style.cssText = `
+          left: ${Math.random() * 100}%;
+          width: ${size}px; height: ${size}px;
+          background: ${color};
+          animation-delay: ${Math.random() * 0.8}s;
+          animation-duration: ${2 + Math.random() * 2}s;
+        `;
+        confettiContainer.appendChild(c);
+        setTimeout(() => c.classList.add('active'), 50);
+      }
+    }
+
+    function startLottery() {
+      // 重置状态
+      confettiContainer.innerHTML = '';
+      selectedOverlay.classList.remove('show');
+      btnStart.disabled = true;
+      btnStart.textContent = '抽奖中...';
+      resultEl.innerHTML = '<span class="hint">转动中...</span>';
+
+      // 随机选中
+      const selectedIndex = Math.floor(Math.random() * n);
+
+      // 旋转动画
+      sphere.style.animation = 'none';
+      void sphere.offsetWidth;
+      sphere.style.animation = 'spin-fast 3s ease-out forwards';
+
+      // 等待旋转结束
+      setTimeout(() => {
+        // 球体继续旋转（恢复到慢速）
+        sphere.style.animation = 'rotate-slow 20s linear infinite';
+
+        // 显示选中卡片浮层
+        selectedCard.style.background = colorMap[selectedIndex % colorMap.length];
+        selectedCardName.textContent = provinces[selectedIndex].name;
+        selectedOverlay.classList.add('show');
+
+        createConfetti();
+        resultEl.innerHTML = `<span class="result-text">🎯 ${provinces[selectedIndex].name}</span>`;
+        btnStart.disabled = false;
+        btnStart.textContent = '抽奖完成';
+
+      }, 3100);
+    }
+  </script>
+</body>
+</html>
